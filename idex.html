@@ -2,63 +2,49 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Поиск Roblox ID по нику</title>
+  <title>Поиск PlayerId по нику в Roblox</title>
   <style>
-    body { font-family: sans-serif; margin: 40px; }
-    input, button { padding: 8px; font-size: 16px; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 8px; margin: 5px; }
     #result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
   </style>
 </head>
 <body>
-  <h2>Найти UserId по нику в Roblox</h2>
-  <input type="text" id="username" placeholder="Введите ник игрока" />
-  <button onclick="searchUser()">Найти</button>
+  <h2>Найти PlayerId по нику в Roblox</h2>
+  <input type="text" id="nickname" placeholder="Введите никнейм" />
+  <button onclick="searchPlayer()">Поиск</button>
   <div id="result"></div>
 
   <script>
-    async function searchUser() {
-      const nickname = document.getElementById("username").value.trim();
-      const resultDiv = document.getElementById("result");
-
+    async function searchPlayer() {
+      const nickname = document.getElementById("nickname").value.trim();
       if (!nickname) {
-        resultDiv.innerHTML = "❌ Пожалуйста, введите ник.";
+        alert("Введите никнейм");
         return;
       }
 
-      resultDiv.innerHTML = "🔍 Ищем...";
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "Поиск...";
 
       try {
-        const response = await fetch("https://users.roblox.com/v1/users/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            keyword: nickname,
-            limit: 10,
-            excludeBannedUsers: false
-          })
-        });
-
+        const response = await fetch(`https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(nickname)}&limit=10`);
+        if (!response.ok) throw new Error("Ошибка сети или API");
+        
         const data = await response.json();
 
-        if (!data.data || data.data.length === 0) {
-          resultDiv.innerHTML = "❌ Пользователь не найден.";
-          return;
+        if (data.data && data.data.length > 0) {
+          let html = "<h3>Результаты:</h3><ul>";
+          data.data.forEach(user => {
+            html += `<li><strong>${user.name}</strong> (ID: ${user.id}) — ${user.hasVerifiedBadge ? '✅ Verified' : ''}</li>`;
+          });
+          html += "</ul>";
+          resultDiv.innerHTML = html;
+        } else {
+          resultDiv.innerHTML = "Пользователь не найден.";
         }
-
-        // Берём первого совпадающего (точное совпадение по имени — первый в списке, если есть)
-        const user = data.data.find(u => u.name.toLowerCase() === nickname.toLowerCase()) 
-                     || data.data[0]; // или просто первый
-
-        resultDiv.innerHTML = `
-          ✅ Найдено:<br>
-          <strong>Username:</strong> ${user.name}<br>
-          <strong>DisplayName:</strong> ${user.displayName || "—"}<br>
-          <strong>UserId:</strong> <span style="color: green; font-weight: bold;">${user.id}</span>
-        `;
       } catch (err) {
+        resultDiv.innerHTML = `Ошибка: ${err.message}`;
         console.error(err);
-        resultDiv.innerHTML = "❌ Ошибка: " + (err.message || "не удалось выполнить запрос");
-        // ⚠️ Возможна ошибка CORS — см. ниже!
       }
     }
   </script>
