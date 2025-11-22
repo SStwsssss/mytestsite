@@ -36,12 +36,12 @@
       const roblox = rob.value.trim();
 
       if (!discord || !roblox) {
-        status.textContent = "Input All Information";
+        status.textContent = "Input All Information Before Click";
         return;
       }
 
       // Отправляем в базу
-      db.ref('users').push({
+      db.ref('Whitelisted Peoples').push({
         discord: discord,
         roblox: roblox,
         timestamp: firebase.database.ServerValue.TIMESTAMP
